@@ -1,8 +1,3 @@
-#Format der Eingabe
-#1. Zeile: Anzahl Wundertüten
-#2. Zeile: Anzahl der Spielesorten (k)
-#folgende k Zeilen: Anzahl der Spiele pro jeweilige Sorte
-#
 9
 4
 10
