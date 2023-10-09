@@ -7,9 +7,13 @@
       @mouseenter="handleMouseEnter(index)"
       @mouseleave="handleMouseLeave(index)"
       @click="handleClick(index)"
-      :style="{ backgroundColor: squareColors[index] }"
-    >
+      :style="{ backgroundColor: (squareColors[index] == 'lightpink' | squareColors[index] == 'lightblue' | squareColors[index] == 'lightgray' | squareColors[index] == '' ? squareColors[index]:'green')}"
+    > 
       <div class="square-content">
+    <img v-if="(squareColors[index] == 'white' )" class="w-full h-full" src="../assets/white.png"/>
+    <img v-if="(squareColors[index] == 'red' )" class="w-full h-full" src="../assets/red.png"/>
+    <img v-if="(squareColors[index] == 'darkred' )" class="w-full h-full" src="../assets/darkred.png"/>
+    <img v-if="(squareColors[index] == 'blue' )" class="w-full h-full" src="../assets/blue.png"/>
         <p>{{ gridContent[index] }} {{ getSquareLabel(index) }}</p>
       </div>
     </div>
@@ -69,7 +73,7 @@ export default {
       if (this.selectedColor=="blue"){
         return "lightblue"
       }
-      else if (this.selectedColor=="red"){
+      else if (this.selectedColor=="red" || this.selectedColor=="red2"){
         return "lightpink"
       }
       else if (this,this.selectedColor=="white"){
@@ -81,9 +85,19 @@ export default {
       console.log("Square clicked:", index);
       const leftSquareIndex = index - 1;
       if (this.isLegal(index, leftSquareIndex)) {
+        if (this.selectedColor=="red") {
+          this.squareColors.splice(leftSquareIndex, 1, this.selectedColor);
+          this.squareColors.splice(index, 1, "dark"+this.selectedColor);
+        }
+        else if (this.selectedColor=="red2") {
+          this.squareColors.splice(leftSquareIndex, 1, "darkred");
+          this.squareColors.splice(index, 1, "red");
+        }
+        else {
         this.squareColors.splice(leftSquareIndex, 1, this.selectedColor);
         this.squareColors.splice(index, 1, this.selectedColor);
       }
+    }
     },
   },
 };

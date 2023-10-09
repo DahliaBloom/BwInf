@@ -4,8 +4,10 @@ import Sidebar from './components/Sidebar.vue';
 </script>
 
 <template>
-    <Sidebar  @color-updated="updateSelectedColor" />
+    <div class="h-full w-full flex flex-row ">
+    <Sidebar  @color-updated="updateSelectedColor" class=" h-screen"/>
     <HelloWorld :selectedColor="selectedColor" class=" bg-slate-600"/>
+    </div>
 </template>
 
 <script>
@@ -16,7 +18,7 @@ export default {
   },
   data() {
     return {
-      selectedColor: "" // Default color
+      selectedColor: "red" // Default color
     };
   },
   methods: {
