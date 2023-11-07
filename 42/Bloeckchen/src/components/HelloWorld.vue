@@ -1,7 +1,7 @@
 <template>
-  <div class="responsive-grid w-1/2">
+  <div class="responsive-grid w-1/2 p-4">
     <div
-      class="square border border-secondary-300"
+      class="square border border-primary-400 bg-primary-400 rounded-lg"
       v-for="(content, index) in gridContent"
       :key="index"
       @mouseenter="handleMouseEnter(index)"
@@ -59,6 +59,7 @@ export default {
       }
     },
     handleClick(index) {
+      console.log(this.squareColors)
       // Call the method when clicked
       this.clicked(index);
     },
@@ -80,7 +81,20 @@ export default {
         return "lightgray"
       }
     },
+    getGrid() {
+      let i = 0;
+      let grid=[]
+      for (let s of this.squareColors) {
+        if (i%16==0){
+          grid.push([])
+        }
+        grid[(i-(i%16))/16].push(s)
+        i-=-1
+      }
+      return grid
+    },
     clicked(index) {
+      console.log(this.getGrid())
       // Implement your logic for when the square is clicked
       console.log("Square clicked:", index);
       const leftSquareIndex = index - 1;

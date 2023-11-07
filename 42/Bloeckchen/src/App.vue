@@ -4,9 +4,9 @@ import Sidebar from './components/Sidebar.vue';
 </script>
 
 <template>
-    <div class="h-full w-full flex flex-row ">
-    <Sidebar  @color-updated="updateSelectedColor" class=" h-screen"/>
-    <HelloWorld :selectedColor="selectedColor" class=" bg-slate-600"/>
+    <div class=" h-full w-full flex flex-row bg-background-900">
+    <Sidebar  @color-updated="updateSelectedColor" class=" h-screen border-secondary-400 rounded-2xl border mr-2"/>
+    <HelloWorld :selectedColor="selectedColor" class=" border-secondary-400 rounded-2xl border"/>
     </div>
 </template>
 
