@@ -1,7 +1,7 @@
 <template>
   <div class="responsive-grid w-1/2 p-4">
     <div
-      class="square border border-primary-400 bg-primary-400 rounded-lg"
+      class="square border border-primary-400 "
       v-for="(content, index) in gridContent"
       :key="index"
       @mouseenter="handleMouseEnter(index)"
@@ -14,6 +14,7 @@
     <img v-if="(squareColors[index] == 'red' )" class="w-full h-full" src="../assets/red.png"/>
     <img v-if="(squareColors[index] == 'darkred' )" class="w-full h-full" src="../assets/darkred.png"/>
     <img v-if="(squareColors[index] == 'blue' )" class="w-full h-full" src="../assets/blue.png"/>
+    <img v-if="(squareColors[index] == 'darkwhite' )" class="w-full h-full" src="../assets/darkwhite.png"/>
         <p>{{ gridContent[index] }} {{ getSquareLabel(index) }}</p>
       </div>
     </div>
@@ -99,13 +100,17 @@ export default {
       console.log("Square clicked:", index);
       const leftSquareIndex = index - 1;
       if (this.isLegal(index, leftSquareIndex)) {
-        if (this.selectedColor=="red") {
+        if (this.selectedColor=="red" || this.selectedColor=="white") {
           this.squareColors.splice(leftSquareIndex, 1, this.selectedColor);
           this.squareColors.splice(index, 1, "dark"+this.selectedColor);
         }
         else if (this.selectedColor=="red2") {
           this.squareColors.splice(leftSquareIndex, 1, "darkred");
           this.squareColors.splice(index, 1, "red");
+        }
+        else if (this.selectedColor=="white2") {
+          this.squareColors.splice(leftSquareIndex, 1, "darkwhite");
+          this.squareColors.splice(index, 1, "white");
         }
         else {
         this.squareColors.splice(leftSquareIndex, 1, this.selectedColor);
@@ -121,7 +126,7 @@ export default {
 .responsive-grid {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
-  gap: 5px;
+  gap: 0px;
 }
 
 .square {
