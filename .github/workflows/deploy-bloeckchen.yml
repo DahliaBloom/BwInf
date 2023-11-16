@@ -14,7 +14,6 @@ jobs:
           cd ./42/Bloeckchen
           npm ci
           npm run build
-          ls
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
