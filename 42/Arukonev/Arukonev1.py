@@ -29,15 +29,14 @@ def possible_directions(y, x, arukone):
 
 
 def update_coordinates(y, x, direction_to_go):
-    match direction_to_go:
-        case 'y-1':
-            y -= 1
-        case 'y+1':
-            y += 1
-        case 'x-1':
-            x -= 1
-        case 'x+1':
-            x += 1
+    if direction_to_go == 'y-1':
+        y -= 1
+    elif direction_to_go == 'y+1':
+        y += 1
+    elif direction_to_go == 'x-1':
+        x -= 1
+    elif direction_to_go == 'x+1':
+        x += 1
 
     return y, x
 

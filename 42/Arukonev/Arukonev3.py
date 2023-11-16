@@ -1,15 +1,7 @@
-import argparse
+from argparse import ArgumentParser
 from random import randrange
 from copy import deepcopy
-from math import ceil
 import json
-
-
-def args():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-n', type=int, default=5)
-    args_obj = arg_parser.parse_args()
-    return args_obj.n
 
 
 def get_random_coord(arukone):
@@ -23,11 +15,11 @@ def get_random_coord(arukone):
             y, x = new_y, new_x
             has_starting_point = True
             break
-    
+
     if has_starting_point:
         arukone[y][x] = id
         return y, x
-    
+
     return None, None
 
 
@@ -63,34 +55,33 @@ def possible_directions(y, x, arukone):
 
 
 def update_coordinates(y, x, direction_to_go):
-    match direction_to_go:
-        case 'y-1':
-            y -= 1
-        case 'y+1':
-            y += 1
-        case 'x-1':
-            x -= 1
-        case 'x+1':
-            x += 1
+    if direction_to_go == 'y-1':
+        y -= 1
+    elif direction_to_go == 'y+1':
+        y += 1
+    elif direction_to_go == 'x-1':
+        x -= 1
+    elif direction_to_go == 'x+1':
+        x += 1
 
     return y, x
 
 
 if __name__ == '__main__':
-    n = args()
+    n = ArgumentParser().add_argument('-n', type=int, default=5).parse_args().n
     id = 1
     pairs = []
     paths = []
 
-    arukone = [[0 for _ in range(n)] for _ in range(n)]
+    arukone = [[0] * n for _ in range(n)]
     arukone_solved = deepcopy(arukone)
 
     while True:
-        arukone_starting_points = deepcopy(arukone_solved)
-        y, x = get_random_coord(arukone_starting_points)
+        arukone_with_starting_points = deepcopy(arukone_solved)
+        y, x = get_random_coord(arukone_with_starting_points)
         if y == None or not possible_directions(y, x, arukone_solved):
             break
-        target_y, target_x = get_furthest_away(y, x, arukone_starting_points)
+        target_y, target_x = get_furthest_away(y, x, arukone_with_starting_points)
         if target_y == None:
             break
 
@@ -113,7 +104,7 @@ if __name__ == '__main__':
                 if (new_y, new_x) == (target_y, target_x):
                     is_at_target = True
                     break
-            
+
             next_y, next_x = queue[0][-1]
             no_directions_left = len(queue) == 1 and not possible_directions(new_y, new_x, arukone_current_id)
             if no_directions_left or is_at_target:
