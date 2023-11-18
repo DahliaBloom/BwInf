@@ -1,7 +1,5 @@
 import argparse
 from heapq import heappop, heappush
-from icecream import ic
-
 
 class Node:
     def __init__(self, x, y, z):
@@ -81,6 +79,7 @@ if __name__ == '__main__':
     boundary_heap = [
         (0, id, (start_node, 0, start_node))]  # distance with heuristic, id, node, real distance, predecessor_node
     predecessor_nodes = dict()
+    loaded_nodes = set()
 
     while True:
         if len(boundary_heap) == 0:
@@ -88,6 +87,7 @@ if __name__ == '__main__':
         _, _, (node, distance, predecessor_node) = heappop(boundary_heap)
         if node not in predecessor_nodes:
             predecessor_nodes[node] = predecessor_node
+            loaded_nodes.add(node)
             if node == target_node:
                 break
             for neighbours, neighbour_distance in (
@@ -99,17 +99,29 @@ if __name__ == '__main__':
                         id += 1
                         heappush(boundary_heap, (distance_with_heuristic, id, (neighbour, alternative_distance, node)))
 
+    for node in loaded_nodes:
+        floors[node.z][node.y][node.x] = '\033[33m.\033[0m' if floors[node.z][node.y][node.x] == '.' else '\033[32m' + \
+                                                                                                          floors[
+                                                                                                              node.z][
+                                                                                                              node.y][
+                                                                                                              node.x] + '\033[0m'
+
+    time_required = 0
     trace = [target_node]
     while trace[-1] != start_node:
         from_node = predecessor_nodes[trace[-1]]
         to_node = trace[-1]
+        time_required += 1
 
         if from_node != start_node:
             if from_node.x != to_node.x:
-                floors[from_node.z][from_node.y][from_node.x] = '\033[36m<\033[0m' if from_node.x > to_node.x else '\033[36m>\033[0m'
+                floors[from_node.z][from_node.y][
+                    from_node.x] = '\033[36m<\033[0m' if from_node.x > to_node.x else '\033[36m>\033[0m'
             elif from_node.y != to_node.y:
-                floors[from_node.z][from_node.y][from_node.x] = '\033[36m^\033[0m' if from_node.y > to_node.y else '\033[36mv\033[0m'
+                floors[from_node.z][from_node.y][
+                    from_node.x] = '\033[36m^\033[0m' if from_node.y > to_node.y else '\033[36mv\033[0m'
         if from_node.z != to_node.z:
+            time_required += 2
             if to_node != target_node:
                 floors[to_node.z][to_node.y][to_node.x] = '\033[31m!\033[0m'
             if from_node != start_node:
@@ -117,9 +129,7 @@ if __name__ == '__main__':
 
         trace.append(from_node)
 
-    coord = list(map(lambda x: (x.x, x.y, x.z), trace))[::-1]
+    for y in range(len(floors[0])):
+        print(''.join(floors[0][y]) + '   ' + ''.join(floors[1][y]))
 
-    for floor in floors:
-        for row in floor:
-            print(''.join(map(lambda c: '\033[32m' + c + '\033[0m' if c in ('A', 'B') else c, row)))
-        print('\n')
+    print(f'\nTime required: \033[35m{time_required} seconds\033[0m')
