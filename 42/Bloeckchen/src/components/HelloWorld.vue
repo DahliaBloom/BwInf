@@ -20,7 +20,8 @@
         <img v-if="(squareColors[index] == 'Lr')" class="w-full h-full scale-[1.03]" src="../assets/darkredlit.png" />
         <img v-if="(squareColors[index] == 'LB')" class="w-full h-full scale-[1.03]" src="../assets/bluelit.png" />
         <img v-if="(squareColors[index] == 'Lw')" class="w-full h-full scale-[1.03]" src="../assets/darkwhitelit.png" />
-        <button v-if="(squareColors[index] == 'yellow') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'L')"
+        <button
+          v-if="(squareColors[index] == 'yellow') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'L')"
           class="w-full h-full scale-[1.03]" @click="squareColors[index] = 'darkyellow'"><img
             src="../assets/yellow.png"></button>
         <button
@@ -40,7 +41,7 @@
   <div class="flex gap-4 flex-col w-1/3 pt-4">
     <div class="flex justify-around w-full">
       <button
-        @click="console.log(this.squareColors);this.redoStack = []; this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item)); this.inViewState = true; this.applyLights(this.cutie(this.formatColors(this.squareColors)))"
+        @click="console.log(this.squareColors); this.redoStack = []; this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item)); this.inViewState = true; this.applyLights(this.cutie(this.formatColors(this.squareColors))); this.calculateTable()"
         class="btn-primary btn">APPLY</button>
       <button v-if="this.undoStack.length > 0" @click="undo" class="btn-primary btn"><span
           class="material-symbols-outlined">
@@ -100,7 +101,6 @@ export default {
         let tmp = []
         for (let x = 0; x < l[y].length; x++) {
           if (l[y][x] == 'W') {
-            console.log(l[y])
             tmp.push('W')
             l[y][x + 1] = 'w'
           }
@@ -134,18 +134,102 @@ export default {
       this.redoStack = [];
       this.inViewState = false;
     },
-    calculateTable(){
+    calculateTable() {
       let lights = []
-      for (let i = 0; i < this.squareColors; i++){
-        if ((this.squareColors[0]=="D"||this.squareColors[0])=="D"){}
+      let outputs = []
+      for (let i = 0; i < this.squareColors.length; i++) {
+        if ((this.squareColors[i][0] == "L" || this.squareColors[i][0] == "D") && this.squareColors[i][1] == "L") {
+          lights.push([i, this.squareColors[i]])
+        }
+        if ((this.squareColors[i][0] == "L" || this.squareColors[i][0] == "D") && this.squareColors[i][1] == "Q") {
+          outputs.push([i, this.squareColors[i]])
+        }
       }
+
+      const combinations = Math.pow(2, lights.length);
+      const table = [];
+      let squareColorsClone = this.formatColors(JSON.parse(JSON.stringify(this.squareColors))).flat()
+
+      console.log("squareColorsClone:")
+      console.log(squareColorsClone)
+
+      console.log("Lights:")
+      console.log(lights)
+
+      for (let i = 0; i < combinations; i++) {
+        // Get binary string e.g., "01" for the combination
+        const binaryString = i.toString(2).padStart(lights.length, '0');
+
+        // Prepare squareColors for the current combination
+        const squareColors = [];
+
+        let squareColorsClone = this.formatColors(JSON.parse(JSON.stringify(this.squareColors))).flat()
+
+        binaryString.split('').forEach((bit, index) => {
+          if (bit == 0) {
+            squareColorsClone[lights[index][0]] = `DL${squareColorsClone[lights[index][0]].substring(2)}`;
+          }
+          else {
+            squareColorsClone[lights[index][0]] = `LL${squareColorsClone[lights[index][0]].substring(2)}`;
+          }
+        });
+
+        let squareColorsCloneClone = []
+        let y = []
+
+        for (let l of squareColorsClone) {
+          if (y.length == this.gridSize) {
+            squareColorsCloneClone.push(y);
+            y = [];
+          }
+          if ((l[0]=="L" || l[0]=="D")&&(l[1]!="L" && l[1]!="Q")){
+            y.push(l[1])
+          }
+          else {
+            y.push(l)
+          }
+        }
+        squareColorsCloneClone.push(y)
+
+        // Call cutie() and get the result for the current combination
+        const cutieResult = this.cutie(squareColorsCloneClone).flat();
+        console.log("cutieResult:")
+        console.log(cutieResult)
+
+        // Map the cutieResult to the outputs array format
+        const outputStrings = outputs.map(output => cutieResult[output[0]]);
+
+        // Store the combination and its corresponding outputs
+        table.push({ combination: binaryString, outputs: outputStrings });
+      }
+
+      let tableString = "| "
+      lights.forEach(light => tableString+=light[1].slice(1)+" | ")
+      outputs.forEach(light => tableString+=light[1].slice(1)+" | ")
+      tableString+="\n"
+      outputs.forEach(light => tableString+="+-----")
+      tableString+="+"
+
+      for (let x of table) {
+        tableString+="\n| " 
+        for (let b of x.combination.split("")){
+          tableString+=((b=="0"?"Aus":"An")+" | ")
+        }
+        console.log(x.outputs)
+        for (let b of x.outputs){
+          tableString+=(b[0]=="D"?"Aus":"An")+"| "
+        }
+      }
+
+      console.log(tableString)
+
+      console.log(table)
     },
     handleMouseEnter(index) {
       // Change the color of the hovered square
       // Change the color of the square to the left
       const leftSquareIndex = index - 1;
       if (this.selectedColor == "yellow") {
-        console.log(this.squareColors[index]);
         if (this.squareColors[index] == '') {
           this.squareColors.splice(index, 1, "lightyellow");
         }
@@ -177,6 +261,7 @@ export default {
       }
     },
     cutie(l) {
+      console.log("cutie received:")
       console.log(l)
       for (let y = l.length - 1; y >= 0; y--) {
         for (let x = 0; x < l[y].length; x++) {
@@ -218,6 +303,7 @@ export default {
           }
           else if (l[y][x] == 'W') {
             if (l[y + 1][x + 1][0] == 'L' && l[y + 1][x][0] == 'L') {
+              console.log("double true white")
               l[y][x] = 'DW';
               l[y][x + 1] = 'Dw';
             }
@@ -228,7 +314,8 @@ export default {
           }
         }
       }
-      console.log(l);
+      console.log("cutie has decided:")
+      console.log(l)
       return l;
     },
     applyLights(l) {
@@ -238,7 +325,6 @@ export default {
           this.squareColors[y * this.gridSize + x] = (l[y][x][0] == 'L' ? l[y][x] : (l[y][x] == 'X' ? '' : l[y][x]));
         }
       }
-      console.log(this.squareColors);
     },
     handleClick(index) {
       if (this.inViewState) {
@@ -270,24 +356,21 @@ export default {
         // Pop the last state from redoStack and set it as current state
         this.squareColors = JSON.parse(JSON.stringify(this.redoStack.pop()));
       }
-      console.log(this.squareColors);
     },
     hoveredOver(index) {
       // Implement your logic for when the square is hovered over
-      console.log("Square hovered over:", index);
     },
     formatColors() {
-      console.log("received to format in colors")
-      console.log(this.squareColors)
       let tmp = [];
       let y = [];
+      
+      let i = 0;
+      let j = 0;
       for (let l of this.squareColors) {
         if (y.length == this.gridSize) {
           tmp.push(y);
           y = [];
         }
-        let i = 0;
-        let j = 0;
         switch (l) {
           case 'red':
             y.push('R');
@@ -364,18 +447,14 @@ export default {
       return grid;
     },
     clicked(index) {
-      console.log(this.getGrid());
       // Implement your logic for when the square is clicked
-      console.log("Square clicked:", index);
       const leftSquareIndex = index - 1;
       if (this.selectedColor == "yellow") {
-        console.log(this.squareColors[index]);
         if (this.squareColors[index] == 'lightyellow') {
           this.squareColors.splice(index, 1, "yellow");
         }
       }
       else if (this.selectedColor == "green") {
-        console.log(this.squareColors[index]);
         if (this.squareColors[index] == 'lightgreen') {
           this.squareColors.splice(index, 1, "green");
         }
@@ -432,4 +511,5 @@ export default {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-}</style>
+}
+</style>
