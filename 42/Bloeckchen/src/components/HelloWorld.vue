@@ -21,18 +21,18 @@
         <img v-if="(squareColors[index] == 'LB')" class="w-full h-full scale-[1.03]" src="../assets/bluelit.png" />
         <img v-if="(squareColors[index] == 'Lw')" class="w-full h-full scale-[1.03]" src="../assets/darkwhitelit.png" />
         <button
-          v-if="(squareColors[index] == 'yellow') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'L')"
+          v-if="(squareColors[index] == 'yellow') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'Q')"
           class="w-full h-full scale-[1.03]" @click="squareColors[index] = 'darkyellow'"><img
             src="../assets/yellow.png"></button>
         <button
-          v-if="(squareColors[index] == 'darkyellow') || (squareColors[index][0] == 'L' && squareColors[index][1] == 'L')"
+          v-if="(squareColors[index] == 'darkyellow') || (squareColors[index][0] == 'L' && squareColors[index][1] == 'Q')"
           class="w-full h-full scale-[1.03]" @click="squareColors[index] = 'yellow'"><img
             src="../assets/yellowlit.png"></button>
         <button
-          v-if="(squareColors[index] != '' && squareColors[index] != 'X' && (squareColors[index] == 'green' || (squareColors[index][0] == 'Q') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'Q')))"
+          v-if="(squareColors[index] != '' && squareColors[index] != 'X' && (squareColors[index] == 'green' || (squareColors[index][0] == 'Q') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'L')))"
           class="w-full h-full scale-[1.03]"><img src="../assets/green.png"></button>
         <button
-          v-if="(squareColors[index] != '' && squareColors[index] != 'X' && (squareColors[index] == 'darkgreen' || (squareColors[index][0] == 'L' && squareColors[index][1] == 'Q')))"
+          v-if="(squareColors[index] != '' && squareColors[index] != 'X' && (squareColors[index] == 'darkgreen' || (squareColors[index][0] == 'L' && squareColors[index][1] == 'L')))"
           class="w-full h-full scale-[1.03]"><img src="../assets/greenlit.png"></button>
         <p>{{ gridContent[index] }} {{ getSquareLabel(index) }}</p>
       </div>
@@ -167,10 +167,10 @@ export default {
       let lights = []
       let outputs = []
       for (let i = 0; i < this.squareColors.length; i++) {
-        if ((this.squareColors[i][0] == "L" || this.squareColors[i][0] == "D") && this.squareColors[i][1] == "L") {
+        if ((this.squareColors[i][0] == "L" || this.squareColors[i][0] == "D") && this.squareColors[i][1] == "Q") {
           lights.push([i, this.squareColors[i]])
         }
-        if ((this.squareColors[i][0] == "L" || this.squareColors[i][0] == "D") && this.squareColors[i][1] == "Q") {
+        if ((this.squareColors[i][0] == "L" || this.squareColors[i][0] == "D") && this.squareColors[i][1] == "L") {
           outputs.push([i, this.squareColors[i]])
         }
       }
@@ -196,10 +196,10 @@ export default {
 
         binaryString.split('').forEach((bit, index) => {
           if (bit == 0) {
-            squareColorsClone[lights[index][0]] = `DL${squareColorsClone[lights[index][0]].substring(2)}`;
+            squareColorsClone[lights[index][0]] = `DQ${squareColorsClone[lights[index][0]].substring(2)}`;
           }
           else {
-            squareColorsClone[lights[index][0]] = `LL${squareColorsClone[lights[index][0]].substring(2)}`;
+            squareColorsClone[lights[index][0]] = `LQ${squareColorsClone[lights[index][0]].substring(2)}`;
           }
         });
 
@@ -294,26 +294,26 @@ export default {
     cutie(l) {
       console.log("cutie received:")
       console.log(l)
-      for (let y = l.length - 1; y >= 0; y--) {
+      for (let y = 0; y < l.length; y++) {
         for (let x = 0; x < l[y].length; x++) {
           if (l[y][x] == 'X') {
             //l[y][x]=''
           }
-          else if (l[y][x][1] == 'Q') {
-            if (l[y + 1][x][0] == 'L') {
-              l[y][x] = 'LQ' + l[y][x].slice(2);
+          else if (l[y][x][1] == 'L') {
+            if (l[y - 1][x][0] == 'L') {
+              l[y][x] = 'LL' + l[y][x].slice(2);
             }
             else {
-              l[y][x] = 'DQ' + l[y][x].slice(2);
+              l[y][x] = 'DL' + l[y][x].slice(2);
             }
           }
           else if (l[y][x] == 'B') {
-            if (l[y + 1][x][0] == 'L') {
+            if (l[y - 1][x][0] == 'L') {
               l[y][x] = 'LB';
             }
           }
           else if (l[y][x] == 'R') {
-            if (l[y + 1][x][0] == 'L') {
+            if (l[y - 1][x][0] == 'L') {
               l[y][x] = 'DR';
               l[y][x + 1] = 'Dr';
             }
@@ -323,7 +323,7 @@ export default {
             }
           }
           else if (l[y][x] == 'r') {
-            if (l[y + 1][x + 1][0] == 'L') {
+            if (l[y - 1][x + 1][0] == 'L') {
               l[y][x] = 'Dr';
               l[y][x + 1] = 'DR';
             }
@@ -333,8 +333,7 @@ export default {
             }
           }
           else if (l[y][x] == 'W') {
-            if (l[y + 1][x + 1][0] == 'L' && l[y + 1][x][0] == 'L') {
-              console.log("double true white")
+            if (l[y - 1][x + 1][0] == 'L' && l[y - 1][x][0] == 'L') {
               l[y][x] = 'DW';
               l[y][x + 1] = 'Dw';
             }
@@ -419,19 +418,19 @@ export default {
             y.push('W');
             break;
           case 'yellow':
-            y.push('DL' + i);
+            y.push('DQ' + i);
             i++;
             break;
           case 'darkyellow':
-            y.push('LL' + i);
+            y.push('LQ' + i);
             i++;
             break;
           case 'darkgreen':
-            y.push('LQ' + j);
+            y.push('LL' + j);
             j++;
             break;
           case 'green':
-            y.push('DQ' + j);
+            y.push('DL' + j);
             j++;
             break;
           case '':
