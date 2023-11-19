@@ -1,18 +1,39 @@
 import argparse
 from heapq import heappop, heappush
-from icecream import ic
-
 
 class Node:
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
-        self.same_floor_neighbours = []
-        self.other_floor_neighbour = []
 
     def distance_to(self, other_node):
         return abs(other_node.x - self.x) + abs(other_node.y - self.y) + 3 * abs(other_node.z - self.z)
+
+    @staticmethod
+    def _get_neighbours(possible_neighbours):
+        neighbours = []
+        for neighbour_coords, has_neighbour in possible_neighbours:
+            if has_neighbour:
+                if neighbour_coords in nodes_pool:
+                    neighbours.append(nodes_pool[neighbour_coords])
+                else:
+                    if floors[neighbour_coords[2]][neighbour_coords[1]][neighbour_coords[0]] != '#':
+                        node = Node(neighbour_coords[0], neighbour_coords[1], neighbour_coords[2])
+                        nodes_pool[neighbour_coords] = node
+                        neighbours.append(node)
+
+        return neighbours
+
+    def same_floor_neighbours(self):
+        return self._get_neighbours((
+            ((self.x - 1, self.y, self.z), self.x > 0),
+            ((self.x + 1, self.y, self.z), self.x < len(floors[0][0]) - 1),
+            ((self.x, self.y - 1, self.z), self.y > 0),
+            ((self.x, self.y + 1, self.z), self.y < len(floors[0]) - 1)))
+
+    def other_floor_neighbour(self):
+        return self._get_neighbours([((self.x, self.y, abs(self.z - 1)), True)])
 
 
 def create_graph_from_file():
@@ -26,70 +47,89 @@ def create_graph_from_file():
         exit(1)
 
     with open(f'./zauberschule{example_number}.txt', 'r') as f:
-        height, width = tuple(map(lambda x: int(x) - 2, f.readline().strip().split()))
-        nodes = []
+        height, _ = map(int, f.readline().strip().split())
+        fields = f.readlines()
+        floors = []
+        for floor in (fields[:height], fields[height + 1:2 * height + 1]):
+            floor = floor[1:-1]
+            floor = [list(row.strip()[1:-1]) for row in floor]
+            floors.append(floor)
 
-        for floor in range(2):
-            f.readline()
-
-            for y in range(height):
-                for x, field in enumerate(f.readline().strip()[1:-1]):
-                    if field == '#':
-                        nodes.append(None)
-                    else:
-                        node = Node(x, y, floor)
-                        if x > 0 and nodes[-1] is not None:
-                            node.same_floor_neighbours.append(nodes[-1])
-                            nodes[-1].same_floor_neighbours.append(node)
-                        if y > 0 and nodes[-width] is not None:
-                            node.same_floor_neighbours.append(nodes[-width])
-                            nodes[-width].same_floor_neighbours.append(node)
-                        if floor > 0 and nodes[-width * height] is not None:
-                            node.other_floor_neighbour.append(nodes[-width * height])
-                            nodes[-width * height].other_floor_neighbour.append(node)
-
-                        nodes.append(node)
-
-                        if field == 'A':
+        for floor_number, floor in enumerate(floors):
+            for y in range(len(floor)):
+                for x in range(len(floor[0])):
+                    if floor[y][x] in ('A', 'B'):
+                        node = Node(x, y, floor_number)
+                        nodes_pool[(x, y, floor_number)] = node
+                        if floor[y][x] == 'A':
                             start_node = node
-                        elif field == 'B':
+                        else:
                             target_node = node
-            f.readline()
-            f.readline()
+                        if len(nodes_pool) == 2:
+                            return start_node, target_node, floors
 
-        return start_node, target_node
+        raise Exception('Could not find start and target point')
 
 
 if __name__ == '__main__':
-    start_node, target_node = create_graph_from_file()
+    nodes_pool = dict()
+    start_node, target_node, floors = create_graph_from_file()
 
-    predecessor_node = dict()
-    boundary_heap = [(0, 0, (start_node, start_node))]
-    counter = 1
-    steps = 0
+    id = 0
+    boundary_heap = [
+        (0, id, (start_node, 0, start_node))]  # distance with heuristic, id, node, real distance, predecessor_node
+    predecessor_nodes = dict()
+    loaded_nodes = set()
 
     while True:
-        steps += 1
-        distance_current_node, _, (parent_node, current_node) = heappop(boundary_heap)
-
-        if current_node not in predecessor_node:
-            predecessor_node[current_node] = parent_node
-
-            if current_node == target_node:
+        if len(boundary_heap) == 0:
+            raise Exception('No possible path from A to B found')
+        _, _, (node, distance, predecessor_node) = heappop(boundary_heap)
+        if node not in predecessor_nodes:
+            predecessor_nodes[node] = predecessor_node
+            loaded_nodes.add(node)
+            if node == target_node:
                 break
-
-            for neighbours, weight in (
-                    (current_node.same_floor_neighbours, 1), (current_node.other_floor_neighbour, 3)):
+            for neighbours, neighbour_distance in (
+                    (node.same_floor_neighbours(), 1), (node.other_floor_neighbour(), 3)):
                 for neighbour in neighbours:
-                    if neighbour not in predecessor_node:
-                        new_distance = distance_current_node + weight + target_node.distance_to(neighbour)
-                        heappush(boundary_heap, (new_distance, counter, (current_node, neighbour)))
-                        counter += 1
+                    if neighbour not in predecessor_nodes:
+                        alternative_distance = distance + neighbour_distance
+                        distance_with_heuristic = alternative_distance + target_node.distance_to(neighbour)
+                        id += 1
+                        heappush(boundary_heap, (distance_with_heuristic, id, (neighbour, alternative_distance, node)))
 
+    for node in loaded_nodes:
+        floors[node.z][node.y][node.x] = '\033[33m.\033[0m' if floors[node.z][node.y][node.x] == '.' else '\033[32m' + \
+                                                                                                          floors[
+                                                                                                              node.z][
+                                                                                                              node.y][
+                                                                                                              node.x] + '\033[0m'
+
+    time_required = 0
     trace = [target_node]
     while trace[-1] != start_node:
-        trace.append(predecessor_node[trace[-1]])
+        from_node = predecessor_nodes[trace[-1]]
+        to_node = trace[-1]
+        time_required += 1
 
-    coord = list(map(lambda x: (x.x, x.y, x.z), trace))[::-1]
-    ic(coord)
-    ic(steps)
+        if from_node != start_node:
+            if from_node.x != to_node.x:
+                floors[from_node.z][from_node.y][
+                    from_node.x] = '\033[36m<\033[0m' if from_node.x > to_node.x else '\033[36m>\033[0m'
+            elif from_node.y != to_node.y:
+                floors[from_node.z][from_node.y][
+                    from_node.x] = '\033[36m^\033[0m' if from_node.y > to_node.y else '\033[36mv\033[0m'
+        if from_node.z != to_node.z:
+            time_required += 2
+            if to_node != target_node:
+                floors[to_node.z][to_node.y][to_node.x] = '\033[31m!\033[0m'
+            if from_node != start_node:
+                floors[from_node.z][from_node.y][from_node.x] = '\033[31m!\033[0m'
+
+        trace.append(from_node)
+
+    for y in range(len(floors[0])):
+        print(''.join(floors[0][y]) + '   ' + ''.join(floors[1][y]))
+
+    print(f'\nTime required: \033[35m{time_required} seconds\033[0m')
