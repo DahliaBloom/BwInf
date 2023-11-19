@@ -20,10 +20,13 @@
         <img v-if="(squareColors[index] == 'Lr')" class="w-full h-full scale-[1.03]" src="../assets/darkredlit.png" />
         <img v-if="(squareColors[index] == 'LB')" class="w-full h-full scale-[1.03]" src="../assets/bluelit.png" />
         <img v-if="(squareColors[index] == 'Lw')" class="w-full h-full scale-[1.03]" src="../assets/darkwhitelit.png" />
-        <button v-if="(squareColors[index] == 'yellow')" class="w-full h-full scale-[1.03]"
-          @click="squareColors[index] = 'darkyellow'"><img src="../assets/yellow.png"></button>
-        <button v-if="(squareColors[index] == 'darkyellow')" class="w-full h-full scale-[1.03]"
-          @click="squareColors[index] = 'yellow'"><img src="../assets/yellowlit.png"></button>
+        <button v-if="(squareColors[index] == 'yellow') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'L')"
+          class="w-full h-full scale-[1.03]" @click="squareColors[index] = 'darkyellow'"><img
+            src="../assets/yellow.png"></button>
+        <button
+          v-if="(squareColors[index] == 'darkyellow') || (squareColors[index][0] == 'L' && squareColors[index][1] == 'L')"
+          class="w-full h-full scale-[1.03]" @click="squareColors[index] = 'yellow'"><img
+            src="../assets/yellowlit.png"></button>
         <button
           v-if="(squareColors[index] != '' && squareColors[index] != 'X' && (squareColors[index] == 'green' || (squareColors[index][0] == 'Q') || (squareColors[index][0] == 'D' && squareColors[index][1] == 'Q')))"
           class="w-full h-full scale-[1.03]"><img src="../assets/green.png"></button>
@@ -36,7 +39,8 @@
   </div>
   <div class="flex gap-4 flex-col w-1/3 pt-4">
     <div class="flex justify-around w-full">
-      <button @click="this.redoStack = [];this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item));this.inViewState=true; this.applyLights(this.cutie(this.formatColors(this.squareColors)))"
+      <button
+        @click="console.log(this.squareColors);this.redoStack = []; this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item)); this.inViewState = true; this.applyLights(this.cutie(this.formatColors(this.squareColors)))"
         class="btn-primary btn">APPLY</button>
       <button v-if="this.undoStack.length > 0" @click="undo" class="btn-primary btn"><span
           class="material-symbols-outlined">
@@ -57,12 +61,16 @@
         </span></button>
     </div>
     <div class="flex gap-4">
-      <input type="range" min="2" max="32" class="range" step="1" v-model="gridSize" @input="sliderChanged" />{{ this.gridSize }}
+      <input type="range" min="2" max="32" class="range" step="1" v-model="gridSize" @input="sliderChanged" />{{
+        this.gridSize }}
     </div>
+    <InputField @file-uploaded="textUploaded"></InputField>
   </div>
 </template>
 
 <script>
+import InputField from './inputField.vue';
+
 export default {
   data() {
     return {
@@ -81,21 +89,63 @@ export default {
       const col = (index % this.gridSize) + 1;
       return `${row}${col}`;
     },
+    textUploaded(text) {
+      let l = text.split('\n').map(line => line.trim().split(' ').filter(word => word !== ''));
+      let res = []
+
+      this.gridSize = Number(l[0][0] > l[0][1] ? l[0][0] : l[0][1])
+      this.sliderChanged()
+
+      for (let y = 1; y < l.length - 1; y++) {
+        let tmp = []
+        for (let x = 0; x < l[y].length; x++) {
+          if (l[y][x] == 'W') {
+            console.log(l[y])
+            tmp.push('W')
+            l[y][x + 1] = 'w'
+          }
+          else if (l[y][x][0] == 'L') {
+            tmp.push('D' + l[y][x])
+          }
+          else if (l[y][x][0] == 'Q') {
+            tmp.push('D' + l[y][x])
+          }
+          else {
+            tmp.push(l[y][x])
+          }
+        }
+        while (tmp.length < this.gridSize) {
+          tmp.push('X')
+        }
+        res.push(tmp)
+      }
+      while (res.length < this.gridSize) {
+        res.push(Array(this.gridSize).fill("X"))
+      }
+      this.applyLights(res)
+      this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)));
+      this.inViewState = false;
+      this.redoStack = [];
+    },
     sliderChanged() {
-      this.gridContent = Array(this.gridSize * this.gridSize).fill("")
-      this.squareColors = Array(this.gridSize * this.gridSize).fill("")
-      this.undoStack = []
-      this.redoStack = []
-      this.inViewState=false
+      this.gridContent = Array(this.gridSize * this.gridSize).fill("");
+      this.squareColors = Array(this.gridSize * this.gridSize).fill("");
+      this.undoStack = [];
+      this.redoStack = [];
+      this.inViewState = false;
+    },
+    calculateTable(){
+      let lights = []
+      for (let i = 0; i < this.squareColors; i++){
+        if ((this.squareColors[0]=="D"||this.squareColors[0])=="D"){}
+      }
     },
     handleMouseEnter(index) {
       // Change the color of the hovered square
-
       // Change the color of the square to the left
       const leftSquareIndex = index - 1;
-
       if (this.selectedColor == "yellow") {
-        console.log(this.squareColors[index])
+        console.log(this.squareColors[index]);
         if (this.squareColors[index] == '') {
           this.squareColors.splice(index, 1, "lightyellow");
         }
@@ -109,7 +159,6 @@ export default {
         this.squareColors.splice(leftSquareIndex, 1, this.lighterColor());
         this.squareColors.splice(index, 1, this.lighterColor());
       }
-
       // Call the method when hovered
       this.hoveredOver(index);
     },
@@ -136,71 +185,74 @@ export default {
           }
           else if (l[y][x][1] == 'Q') {
             if (l[y + 1][x][0] == 'L') {
-              l[y][x] = 'LQ' + l[y][x][2]
+              l[y][x] = 'LQ' + l[y][x].slice(2);
             }
             else {
-              l[y][x] = 'DQ' + l[y][x][2]
+              l[y][x] = 'DQ' + l[y][x].slice(2);
             }
           }
           else if (l[y][x] == 'B') {
             if (l[y + 1][x][0] == 'L') {
-              l[y][x] = 'LB'
+              l[y][x] = 'LB';
             }
           }
           else if (l[y][x] == 'R') {
             if (l[y + 1][x][0] == 'L') {
-              l[y][x] = 'DR'
-              l[y][x + 1] = 'Dr'
-            } else {
-              l[y][x] = 'LR'
-              l[y][x + 1] = 'Lr'
+              l[y][x] = 'DR';
+              l[y][x + 1] = 'Dr';
+            }
+            else {
+              l[y][x] = 'LR';
+              l[y][x + 1] = 'Lr';
             }
           }
           else if (l[y][x] == 'r') {
             if (l[y + 1][x + 1][0] == 'L') {
-              l[y][x] = 'Dr'
-              l[y][x + 1] = 'DR'
-            } else {
-              l[y][x] = 'Lr'
-              l[y][x + 1] = 'LR'
+              l[y][x] = 'Dr';
+              l[y][x + 1] = 'DR';
+            }
+            else {
+              l[y][x] = 'Lr';
+              l[y][x + 1] = 'LR';
             }
           }
           else if (l[y][x] == 'W') {
             if (l[y + 1][x + 1][0] == 'L' && l[y + 1][x][0] == 'L') {
-              l[y][x] = 'DW'
-              l[y][x + 1] = 'Dw'
-            } else {
-              l[y][x] = 'LW'
-              l[y][x + 1] = 'Lw'
+              l[y][x] = 'DW';
+              l[y][x + 1] = 'Dw';
+            }
+            else {
+              l[y][x] = 'LW';
+              l[y][x + 1] = 'Lw';
             }
           }
         }
       }
-      console.log(l)
-      return l
+      console.log(l);
+      return l;
     },
     applyLights(l) {
+      console.log(l)
       for (let y = 0; y < this.gridSize; y++) {
         for (let x = 0; x < this.gridSize; x++) {
-          this.squareColors[y * this.gridSize + x] = (l[y][x][0] == 'L' ? l[y][x] : (l[y][x] == 'X' ? '' : l[y][x]))
+          this.squareColors[y * this.gridSize + x] = (l[y][x][0] == 'L' ? l[y][x] : (l[y][x] == 'X' ? '' : l[y][x]));
         }
       }
-      console.log(this.squareColors)
+      console.log(this.squareColors);
     },
     handleClick(index) {
-      if (this.inViewState){
+      if (this.inViewState) {
         this.squareColors = JSON.parse(JSON.stringify(this.undoStack.pop()));
-        this.inViewState=false
-        this.undoStack=[]
-        this.redoStack=[]
+        this.inViewState = false;
+        this.undoStack = [];
+        this.redoStack = [];
       }
       else {
-        this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item))
+        this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item));
       }
-      console.log(this.cutie(this.formatColors(this.squareColors)))
+      console.log(this.cutie(this.formatColors(this.squareColors)));
       // Call the method when clicked
       this.clicked(index);
-
       this.redoStack = [];
     },
     undo() {
@@ -218,83 +270,112 @@ export default {
         // Pop the last state from redoStack and set it as current state
         this.squareColors = JSON.parse(JSON.stringify(this.redoStack.pop()));
       }
-      console.log(this.squareColors)
+      console.log(this.squareColors);
     },
     hoveredOver(index) {
       // Implement your logic for when the square is hovered over
       console.log("Square hovered over:", index);
     },
     formatColors() {
-      let tmp = []
-      let y = []
+      console.log("received to format in colors")
+      console.log(this.squareColors)
+      let tmp = [];
+      let y = [];
       for (let l of this.squareColors) {
         if (y.length == this.gridSize) {
-          tmp.push(y)
-          y = []
+          tmp.push(y);
+          y = [];
         }
-        let i = 0
-        let j = 0
+        let i = 0;
+        let j = 0;
         switch (l) {
-          case 'red': y.push('R'); break;
-          case 'darkred': y.push('r'); break;
-          case 'blue': y.push('B'); break;
-          case 'white': y.push('W'); break;
-          case 'darkwhite': y.push('W'); break;
-          case 'yellow': y.push('DL' + i); i++; break;
-          case 'darkyellow': y.push('LL' + i); i++; break;
-          case 'darkgreen': y.push('LQ' + j); j++; break;
-          case 'green': y.push('DQ' + j); j++; break;
-          default: y.push('X'); break;
+          case 'red':
+            y.push('R');
+            break;
+          case 'darkred':
+            y.push('r');
+            break;
+          case 'blue':
+            y.push('B');
+            break;
+          case 'white':
+            y.push('W');
+            break;
+          case 'darkwhite':
+            y.push('W');
+            break;
+          case 'yellow':
+            y.push('DL' + i);
+            i++;
+            break;
+          case 'darkyellow':
+            y.push('LL' + i);
+            i++;
+            break;
+          case 'darkgreen':
+            y.push('LQ' + j);
+            j++;
+            break;
+          case 'green':
+            y.push('DQ' + j);
+            j++;
+            break;
+          case '':
+            y.push('X');
+            break;
+          default:
+            y.push(l);
+            break;
         }
       }
-      tmp.push(y)
-      return tmp
+      tmp.push(y);
+      return tmp;
     },
     isLegal(index, leftSquareIndex) {
-      return (leftSquareIndex >= 0 && (this.squareColors[index] == "lightblue" || this.squareColors[index] == "lightpink" || this.squareColors[index] == "lightyellow" || this.squareColors[index] == "lightgreen" || this.squareColors[index] == "lightgray" || this.squareColors[index] == "") && (this.squareColors[leftSquareIndex] == "lightblue" || this.squareColors[leftSquareIndex] == "lightpink" || this.squareColors[leftSquareIndex] == "lightyellow" || this.squareColors[leftSquareIndex] == "lightgreen" || this.squareColors[leftSquareIndex] == "lightgray" || this.squareColors[leftSquareIndex] == "") && leftSquareIndex % this.gridSize != 15)
+      return (leftSquareIndex >= 0 && (this.squareColors[index] == "lightblue" || this.squareColors[index] == "lightpink" || this.squareColors[index] == "lightyellow" || this.squareColors[index] == "lightgreen" || this.squareColors[index] == "lightgray" || this.squareColors[index] == "") && (this.squareColors[leftSquareIndex] == "lightblue" || this.squareColors[leftSquareIndex] == "lightpink" || this.squareColors[leftSquareIndex] == "lightyellow" || this.squareColors[leftSquareIndex] == "lightgreen" || this.squareColors[leftSquareIndex] == "lightgray" || this.squareColors[leftSquareIndex] == "") && leftSquareIndex % this.gridSize != this.gridSize - 1);
     },
     lighterColor() {
       if (this.selectedColor == "blue") {
-        return "lightblue"
+        return "lightblue";
       }
       else if (this.selectedColor == "red" || this.selectedColor == "red2") {
-        return "lightpink"
+        return "lightpink";
       }
       else if (this.selectedColor == "white") {
-        return "lightgray"
+        return "lightgray";
       }
       else if (this.selectedColor == "yellow") {
-        return "lightyellow"
+        return "lightyellow";
       }
       else if (this.selectedColor == "green") {
-        return "lightgreen"
+        return "lightgreen";
       }
     },
     getGrid() {
       let i = 0;
-      let grid = []
+      let grid = [];
       for (let s of this.squareColors) {
         if (i % this.gridSize == 0) {
-          grid.push([])
+          grid.push([]);
         }
-        grid[(i - (i % this.gridSize)) / this.gridSize].push(s)
-        i -= -1
+        grid[(i - (i % this.gridSize)) / this.gridSize].push(s);
+        i -= -1;
       }
-      return grid
+      return grid;
     },
     clicked(index) {
-      console.log(this.getGrid())
+      console.log(this.getGrid());
       // Implement your logic for when the square is clicked
       console.log("Square clicked:", index);
       const leftSquareIndex = index - 1;
       if (this.selectedColor == "yellow") {
-        console.log(this.squareColors[index])
+        console.log(this.squareColors[index]);
         if (this.squareColors[index] == 'lightyellow') {
           this.squareColors.splice(index, 1, "yellow");
         }
       }
       else if (this.selectedColor == "green") {
-        console.log(this.squareColors[index])
+        console.log(this.squareColors[index]);
         if (this.squareColors[index] == 'lightgreen') {
           this.squareColors.splice(index, 1, "green");
         }
@@ -319,6 +400,7 @@ export default {
       }
     },
   },
+  components: { InputField }
 };
 </script>
 
@@ -350,5 +432,4 @@ export default {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-}
-</style>
+}</style>
