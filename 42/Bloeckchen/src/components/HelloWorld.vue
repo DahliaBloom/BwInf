@@ -38,7 +38,7 @@
       </div>
     </div>
   </div>
-  <div class="flex gap-4 flex-col w-1/3 pt-4">
+  <div class="flex gap-4 flex-col pt-4">
     <div class="flex justify-around w-full">
       <button
         @click="console.log(this.squareColors); this.redoStack = []; this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item)); this.inViewState = true; this.applyLights(this.cutie(this.formatColors(this.squareColors))); this.calculateTable()"
@@ -66,6 +66,22 @@
         this.gridSize }}
     </div>
     <InputField @file-uploaded="textUploaded"></InputField>
+    <div class="overflow-x-auto rounded-lg border border-accent-200">
+      <table class="table w-full ">
+        <thead>
+          <tr>
+            <th v-for="(header, index) in this.headers()" :key="index" class="text-2xl">{{ header }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, rowIndex) in this.parsedRows()" :key="rowIndex">
+            <td v-for="(cell, cellIndex) in row" :key="cellIndex" :class="{ 'bg-yellow-200': cell === 'An' }">
+              {{ cell }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -80,11 +96,24 @@ export default {
       squareColors: Array(16 * 16).fill(""),
       undoStack: [],
       redoStack: [],
-      inViewState: false
+      inViewState: false,
+      tableString: ""
     };
   },
   props: ['selectedColor'],
   methods: {
+    headers() {
+      let headerRow = this.tableString.split("\n")[0];
+      return headerRow.split("|").map(h => h.trim()).filter(h => h);
+    },
+    parsedRows() {
+      return this.tableString
+        .split("\n")
+        .slice(2) // Skip the header and separator
+        .map(row =>
+          row.split("|").map(cell => cell.trim()).filter(cell => cell)
+        );
+    },
     getSquareLabel(index) {
       const row = String.fromCharCode(65 + Math.floor(index / this.gridSize));
       const col = (index % this.gridSize) + 1;
@@ -182,7 +211,7 @@ export default {
             squareColorsCloneClone.push(y);
             y = [];
           }
-          if ((l[0]=="L" || l[0]=="D")&&(l[1]!="L" && l[1]!="Q")){
+          if ((l[0] == "L" || l[0] == "D") && (l[1] != "L" && l[1] != "Q")) {
             y.push(l[1])
           }
           else {
@@ -204,24 +233,26 @@ export default {
       }
 
       let tableString = "| "
-      lights.forEach(light => tableString+=light[1].slice(1)+" | ")
-      outputs.forEach(light => tableString+=light[1].slice(1)+" | ")
-      tableString+="\n"
-      outputs.forEach(light => tableString+="+-----")
-      tableString+="+"
+      lights.forEach(light => tableString += light[1].slice(1) + " | ")
+      outputs.forEach(light => tableString += light[1].slice(1) + " | ")
+      tableString += "\n"
+      outputs.forEach(light => tableString += "+-----")
+      tableString += "+"
 
       for (let x of table) {
-        tableString+="\n| " 
-        for (let b of x.combination.split("")){
-          tableString+=((b=="0"?"Aus":"An")+" | ")
+        tableString += "\n| "
+        for (let b of x.combination.split("")) {
+          tableString += ((b == "0" ? "Aus" : "An") + " | ")
         }
         console.log(x.outputs)
-        for (let b of x.outputs){
-          tableString+=(b[0]=="D"?"Aus":"An")+"| "
+        for (let b of x.outputs) {
+          tableString += (b[0] == "D" ? "Aus" : "An") + "| "
         }
       }
 
       console.log(tableString)
+
+      this.tableString = tableString
 
       console.log(table)
     },
@@ -363,7 +394,7 @@ export default {
     formatColors() {
       let tmp = [];
       let y = [];
-      
+
       let i = 0;
       let j = 0;
       for (let l of this.squareColors) {
