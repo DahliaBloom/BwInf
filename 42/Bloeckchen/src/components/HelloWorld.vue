@@ -1,5 +1,5 @@
 <template>
-  <div class="responsive-grid w-1/2 p-4">
+  <div class="responsive-grid w-1/2 p-4" :style="'grid-template-columns: repeat(' + this.gridSize + ', 1fr);'">
     <div :class="'square border' + (squareColors[index] != '' ? 'border-none' : ' border-primary-400')"
       v-for="(content, index) in gridContent" :key="index" @mouseenter="handleMouseEnter(index)"
       @mouseleave="handleMouseLeave(index)" @click="handleClick(index)"
@@ -34,21 +34,32 @@
       </div>
     </div>
   </div>
-  <div class="flex justify-around w-1/3 pt-4">
-  <button @click="this.applyLights(this.cutie(this.formatColors(this.squareColors)))"
-    class="btn-primary btn">APPLY</button>
-  <button v-if="this.undoStack.length>0" @click="undo" class="btn-primary btn"><span class="material-symbols-outlined">
-      undo
-    </span></button>
-    <button v-else @click="undo" class="btn-primary btn btn-disabled"><span class="material-symbols-outlined">
-      undo
-    </span></button>
-    <button v-if="this.redoStack.length>0" @click="redo" class="btn-primary btn"><span class="material-symbols-outlined">
-      redo
-    </span></button>
-    <button v-else @click="redo" class="btn-primary btn btn-disabled"><span class="material-symbols-outlined">
-      redo
-    </span></button></div>
+  <div class="flex gap-4 flex-col w-1/3 pt-4">
+    <div class="flex justify-around w-full">
+      <button @click="this.redoStack = [];this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item));this.inViewState=true; this.applyLights(this.cutie(this.formatColors(this.squareColors)))"
+        class="btn-primary btn">APPLY</button>
+      <button v-if="this.undoStack.length > 0" @click="undo" class="btn-primary btn"><span
+          class="material-symbols-outlined">
+          undo
+        </span></button>
+      <button v-else @click="undo" class="btn-primary btn btn-disabled"><span class="material-symbols-outlined">
+          undo
+        </span></button>
+      <button v-if="this.redoStack.length > 0" @click="redo" class="btn-primary btn"><span
+          class="material-symbols-outlined">
+          redo
+        </span></button>
+      <button v-else @click="redo" class="btn-primary btn btn-disabled"><span class="material-symbols-outlined">
+          redo
+        </span></button>
+      <button @click="sliderChanged" class="btn-primary btn"><span class="material-symbols-outlined">
+          disabled_by_default
+        </span></button>
+    </div>
+    <div class="flex gap-4">
+      <input type="range" min="2" max="32" class="range" step="1" v-model="gridSize" @input="sliderChanged" />{{ this.gridSize }}
+    </div>
+  </div>
 </template>
 
 <script>
@@ -59,7 +70,8 @@ export default {
       gridContent: Array(16 * 16).fill(""),
       squareColors: Array(16 * 16).fill(""),
       undoStack: [],
-      redoStack: []
+      redoStack: [],
+      inViewState: false
     };
   },
   props: ['selectedColor'],
@@ -68,6 +80,13 @@ export default {
       const row = String.fromCharCode(65 + Math.floor(index / this.gridSize));
       const col = (index % this.gridSize) + 1;
       return `${row}${col}`;
+    },
+    sliderChanged() {
+      this.gridContent = Array(this.gridSize * this.gridSize).fill("")
+      this.squareColors = Array(this.gridSize * this.gridSize).fill("")
+      this.undoStack = []
+      this.redoStack = []
+      this.inViewState=false
     },
     handleMouseEnter(index) {
       // Change the color of the hovered square
@@ -169,8 +188,15 @@ export default {
       console.log(this.squareColors)
     },
     handleClick(index) {
-      console.log(this.colorsStack)
-      this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item))
+      if (this.inViewState){
+        this.squareColors = JSON.parse(JSON.stringify(this.undoStack.pop()));
+        this.inViewState=false
+        this.undoStack=[]
+        this.redoStack=[]
+      }
+      else {
+        this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item))
+      }
       console.log(this.cutie(this.formatColors(this.squareColors)))
       // Call the method when clicked
       this.clicked(index);
@@ -225,7 +251,7 @@ export default {
       return tmp
     },
     isLegal(index, leftSquareIndex) {
-      return (leftSquareIndex >= 0 && (this.squareColors[index] == "lightblue" || this.squareColors[index] == "lightpink" || this.squareColors[index] == "lightyellow" || this.squareColors[index] == "lightgreen" || this.squareColors[index] == "lightgray" || this.squareColors[index] == "") && (this.squareColors[leftSquareIndex] == "lightblue" || this.squareColors[leftSquareIndex] == "lightpink" || this.squareColors[leftSquareIndex] == "lightyellow" || this.squareColors[leftSquareIndex] == "lightgreen" || this.squareColors[leftSquareIndex] == "lightgray" || this.squareColors[leftSquareIndex] == "") && leftSquareIndex % 16 != 15)
+      return (leftSquareIndex >= 0 && (this.squareColors[index] == "lightblue" || this.squareColors[index] == "lightpink" || this.squareColors[index] == "lightyellow" || this.squareColors[index] == "lightgreen" || this.squareColors[index] == "lightgray" || this.squareColors[index] == "") && (this.squareColors[leftSquareIndex] == "lightblue" || this.squareColors[leftSquareIndex] == "lightpink" || this.squareColors[leftSquareIndex] == "lightyellow" || this.squareColors[leftSquareIndex] == "lightgreen" || this.squareColors[leftSquareIndex] == "lightgray" || this.squareColors[leftSquareIndex] == "") && leftSquareIndex % this.gridSize != 15)
     },
     lighterColor() {
       if (this.selectedColor == "blue") {
@@ -248,10 +274,10 @@ export default {
       let i = 0;
       let grid = []
       for (let s of this.squareColors) {
-        if (i % 16 == 0) {
+        if (i % this.gridSize == 0) {
           grid.push([])
         }
-        grid[(i - (i % 16)) / 16].push(s)
+        grid[(i - (i % this.gridSize)) / this.gridSize].push(s)
         i -= -1
       }
       return grid
@@ -299,7 +325,6 @@ export default {
 <style scoped>
 .responsive-grid {
   display: grid;
-  grid-template-columns: repeat(16, 1fr);
   gap: 0px;
   height: fit-content;
 }
@@ -325,4 +350,5 @@ export default {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-}</style>
+}
+</style>
