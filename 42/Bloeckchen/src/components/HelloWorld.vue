@@ -37,10 +37,16 @@
   <div class="flex justify-around w-1/3 pt-4">
   <button @click="this.applyLights(this.cutie(this.formatColors(this.squareColors)))"
     class="btn-primary btn">APPLY</button>
-  <button @click="undo" class="btn-primary btn"><span class="material-symbols-outlined">
+  <button v-if="this.undoStack.length>0" @click="undo" class="btn-primary btn"><span class="material-symbols-outlined">
       undo
     </span></button>
-    <button @click="redo" class="btn-primary btn"><span class="material-symbols-outlined">
+    <button v-else @click="undo" class="btn-primary btn btn-disabled"><span class="material-symbols-outlined">
+      undo
+    </span></button>
+    <button v-if="this.redoStack.length>0" @click="redo" class="btn-primary btn"><span class="material-symbols-outlined">
+      redo
+    </span></button>
+    <button v-else @click="redo" class="btn-primary btn btn-disabled"><span class="material-symbols-outlined">
       redo
     </span></button></div>
 </template>
@@ -52,8 +58,8 @@ export default {
       gridSize: 16,
       gridContent: Array(16 * 16).fill(""),
       squareColors: Array(16 * 16).fill(""),
-      colorsStack: [],
-      redocolorsstack: [],
+      undoStack: [],
+      redoStack: []
     };
   },
   props: ['selectedColor'],
@@ -164,22 +170,29 @@ export default {
     },
     handleClick(index) {
       console.log(this.colorsStack)
-      this.colorsStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item))
-      console.log(this.colorsStack)
+      this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)).map(item => ['lightpink', 'lightyellow', 'lightgreen', 'lightblue', 'lightgray'].includes(item) ? '' : item))
       console.log(this.cutie(this.formatColors(this.squareColors)))
       // Call the method when clicked
       this.clicked(index);
+
+      this.redoStack = [];
     },
     undo() {
-      this.redocolorsstack.push(JSON.parse(JSON.stringify(this.squareColors)))
-      this.squareColors = JSON.parse(JSON.stringify(this.colorsStack.pop()))
-      console.log(this.squareColors)
+      if (this.undoStack.length > 0) {
+        // Push the current state to redoStack
+        this.redoStack.push(JSON.parse(JSON.stringify(this.squareColors)));
+        // Pop the last state from undoStack and set it as current state
+        this.squareColors = JSON.parse(JSON.stringify(this.undoStack.pop()));
+      }
     },
     redo() {
-      let tmp = JSON.parse(JSON.stringify(this.redocolorsstack.pop()))
-      this.colorsStack.push(JSON.parse(JSON.stringify(tmp)))
-      this.squareColors = JSON.parse(JSON.stringify(tmp))
-      console.log(JSON.stringify(this.squareColors))
+      if (this.redoStack.length > 0) {
+        // Push the current state to undoStack
+        this.undoStack.push(JSON.parse(JSON.stringify(this.squareColors)));
+        // Pop the last state from redoStack and set it as current state
+        this.squareColors = JSON.parse(JSON.stringify(this.redoStack.pop()));
+      }
+      console.log(this.squareColors)
     },
     hoveredOver(index) {
       // Implement your logic for when the square is hovered over
