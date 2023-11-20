@@ -1,5 +1,5 @@
 <template>
-  <div class="responsive-grid w-1/2 p-4" :style="'grid-template-columns: repeat(' + this.gridSize + ', 1fr);'">
+  <div class="responsive-grid w-1/2 p-4 " :style="'grid-template-columns: repeat(' + this.gridSize + ', 1fr);'">
     <div :class="'square border' + (squareColors[index] != '' ? 'border-none' : ' border-primary-400')"
       v-for="(content, index) in gridContent" :key="index" @mouseenter="handleMouseEnter(index)"
       @mouseleave="handleMouseLeave(index)" @click="handleClick(index)"
@@ -34,7 +34,7 @@
         <button
           v-if="(squareColors[index] != '' && squareColors[index] != 'X' && (squareColors[index] == 'darkgreen' || (squareColors[index][0] == 'L' && squareColors[index][1] == 'L')))"
           class="w-full h-full scale-[1.03]"><img src="../assets/greenlit.png"></button>
-        <p>{{ gridContent[index] }} {{ getSquareLabel(index) }}</p>
+        <p>{{ gridContent[index] }}</p>
       </div>
     </div>
   </div>
@@ -174,26 +174,13 @@ export default {
           outputs.push([i, this.squareColors[i]])
         }
       }
-
       const combinations = Math.pow(2, lights.length);
       const table = [];
       let squareColorsClone = this.formatColors(JSON.parse(JSON.stringify(this.squareColors))).flat()
-
-      console.log("squareColorsClone:")
-      console.log(squareColorsClone)
-
-      console.log("Lights:")
-      console.log(lights)
-
       for (let i = 0; i < combinations; i++) {
-        // Get binary string e.g., "01" for the combination
         const binaryString = i.toString(2).padStart(lights.length, '0');
-
-        // Prepare squareColors for the current combination
         const squareColors = [];
-
         let squareColorsClone = this.formatColors(JSON.parse(JSON.stringify(this.squareColors))).flat()
-
         binaryString.split('').forEach((bit, index) => {
           if (bit == 0) {
             squareColorsClone[lights[index][0]] = `DQ${squareColorsClone[lights[index][0]].substring(2)}`;
@@ -202,10 +189,8 @@ export default {
             squareColorsClone[lights[index][0]] = `LQ${squareColorsClone[lights[index][0]].substring(2)}`;
           }
         });
-
         let squareColorsCloneClone = []
         let y = []
-
         for (let l of squareColorsClone) {
           if (y.length == this.gridSize) {
             squareColorsCloneClone.push(y);
@@ -219,19 +204,10 @@ export default {
           }
         }
         squareColorsCloneClone.push(y)
-
-        // Call cutie() and get the result for the current combination
         const cutieResult = this.cutie(squareColorsCloneClone).flat();
-        console.log("cutieResult:")
-        console.log(cutieResult)
-
-        // Map the cutieResult to the outputs array format
         const outputStrings = outputs.map(output => cutieResult[output[0]]);
-
-        // Store the combination and its corresponding outputs
         table.push({ combination: binaryString, outputs: outputStrings });
       }
-
       let tableString = "| "
       lights.forEach(light => tableString += light[1].slice(1) + " | ")
       outputs.forEach(light => tableString += light[1].slice(1) + " | ")
@@ -249,11 +225,8 @@ export default {
           tableString += (b[0] == "D" ? "Aus" : "An") + "| "
         }
       }
-
       console.log(tableString)
-
       this.tableString = tableString
-
       console.log(table)
     },
     handleMouseEnter(index) {
@@ -297,7 +270,6 @@ export default {
       for (let y = 0; y < l.length; y++) {
         for (let x = 0; x < l[y].length; x++) {
           if (l[y][x] == 'X') {
-            //l[y][x]=''
           }
           else if (l[y][x][1] == 'L') {
             if (l[y - 1][x][0] == 'L') {
